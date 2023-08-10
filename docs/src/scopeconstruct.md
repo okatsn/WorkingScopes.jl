@@ -9,9 +9,13 @@ All variable lives in the name space of a certain module.
 
 Global variable lives in module scope and [there is no all-encompassing global scope](https://docs.julialang.org/en/v1/manual/variables-and-scoping/#Global-Scope).
 
-## Soft and hard
 
-### Case: `global x` not modified
+
+## Soft scope
+
+`for`, `while`, `try` are soft.
+
+### Cases where `global x` will not modified
 
 `x` is created/modified as `local` if ...
 
@@ -43,9 +47,11 @@ x
 
 ```
 
-### Case: `global x` modified
+### Cases where `global x` will be modified 
 
-`x` is modified as `local` if ...
+Global `x` (the `x=5` one) **is** assigned!
+
+#### In interactive context: ambiguous assignment
 
 ```@repl
 x = 5
@@ -62,6 +68,9 @@ x
 
 ```
 
+#### In non-interactive context: you get a warning
+
+Global `x` (the `x=5` one) **is NOT** assigned!
 
 ```@example a789
 code = """
@@ -80,7 +89,9 @@ include_string(@__MODULE__, code)
 
 ```
 
+The `x` of `x = 5`  remains safe!
 
-```@example a789
-x
+```@repl a789
+x 
+
 ```

@@ -12,14 +12,16 @@ makedocs(;
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://okatsn.github.io/WorkingScopes.jl",
         edit_link="main",
-        assets=String[],
+        assets=String[]
     ),
     pages=[
         "Home" => "index.md",
-    ],
+        "Metaprogramming" =>
+            ["Macro call explained" => "sayhello.md"]
+    ]
 )
 
 deploydocs(;
     repo="github.com/okatsn/WorkingScopes.jl",
-    devbranch="main",
+    devbranch="main"
 )

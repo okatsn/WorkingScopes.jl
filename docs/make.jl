@@ -17,7 +17,11 @@ makedocs(;
     pages=[
         "Home" => "index.md",
         "Metaprogramming" =>
-            ["Macro call explained" => "sayhello.md"]
+            ["Macro call explained" => "sayhello.md"],
+        "Variable Scope" =>
+            ["Scope constructs" => "scopeconstruct.md",
+                "Import and Using" => "importusing.md"
+            ]
     ]
 )
 

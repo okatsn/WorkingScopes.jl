@@ -1,6 +1,4 @@
-```@meta
-CurrentModule = OkPkgTemplates
-```
+
 
 ## Macro: create *expression* to be executed in its surrounded scope
 
@@ -187,22 +185,10 @@ sinx
 ### Say Hello
 #### the say-hello function
 ```@docs
-OkPkgTemplates.sayhello3
+WorkingScopes.sayhello3
 ```
 
 #### The say-hello macro built upon
 ```@docs
-OkPkgTemplates.@sayhello3
-```
-
-### Knowing Where am I
-
-```@repl
-using OkPkgTemplates
-
-OkPkgTemplates.DEFAULT_DESTINATION()
-
-OkPkgTemplates.@chkdest
-
-OkPkgTemplates.DEFAULT_DESTINATION()
+WorkingScopes.@sayhello3
 ```

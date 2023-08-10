@@ -1,0 +1,3 @@
+[deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+WorkingScopes = "e7521825-5d6b-4d2d-b9e2-9f70533e6f0b"

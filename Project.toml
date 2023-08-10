@@ -1,13 +1,15 @@
 name = "WorkingScopes"
 uuid = "e7521825-5d6b-4d2d-b9e2-9f70533e6f0b"
 authors = ["okatsn <okatsn@gmail.com> and contributors"]
-version = "1.0.0-DEV"
+version = "0.0.0"
 
 [compat]
 julia = "1.9"
 
 [extras]
+CompatHelperLocal = "5224ae11-6099-4aaa-941d-3aab004bd678"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test"]
+test = ["Test", "Documenter", "CompatHelperLocal"]

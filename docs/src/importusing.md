@@ -26,7 +26,9 @@ Bar.x
 
 ```
 
-### Example 2: 
+### Example 2: Redefine/Assign exported global variable?
+
+It is not allowed once `x` is "called":
 
 ```@example foobar456
 module Bar2
@@ -42,11 +44,36 @@ end
 
 using .Bar2
 
-x
+x # Here is the difference!
 
 x = -1
 
 foo()
+
+x === Bar2.x
+```
+
+But it is allowed *before* `x` is called
+
+```@setup foobar456a
+module Bar2
+    x = 1
+    foo() = x
+    export foo
+    export x # note the difference
+end
+```
+
+
+```@repl foobar456a
+
+using .Bar2
+
+x = -1
+
+foo()
+
+x === Bar2.x
 ```
 
 ### Difference between `using` and `import`

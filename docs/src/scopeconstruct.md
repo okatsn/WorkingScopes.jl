@@ -5,10 +5,10 @@ Referring [Scope of Variables](https://docs.julialang.org/en/v1/manual/variables
 All variable lives in the name space of a certain module.
 
 
-## Global
+## Keynotes
 
-Global variable lives in module scope and [there is no all-encompassing global scope](https://docs.julialang.org/en/v1/manual/variables-and-scoping/#Global-Scope).
-
+- Global variable lives in module scope and [there is no all-encompassing global scope](https://docs.julialang.org/en/v1/manual/variables-and-scoping/#Global-Scope).
+- "in a scope, each variable can only have one meaning, and that meaning is determined regardless of the order of expressions"
 
 
 ## Soft scope
@@ -47,11 +47,13 @@ x
 
 ```
 
-### Cases where `global x` will be modified 
+### Will `global x` will be modified?
 
-Global `x` (the `x=5` one) **is** assigned!
+#### In interactive context: global `x` is modified
 
-#### In interactive context: ambiguous assignment
+Global `x` (the `x=5` one) **is** assigned. 
+This feature allows [moving code back and forth between a function body and REPL when trying to debug](https://docs.julialang.org/en/v1/manual/variables-and-scoping/#on-soft-scope).
+
 
 ```@repl
 x = 5
@@ -93,5 +95,12 @@ The `x` of `x = 5`  remains safe!
 
 ```@repl a789
 x 
-
 ```
+
+You can disambiguate by using `local x = 1` to suppress this warning.
+
+
+### Brief summary
+
+- You can "see" variable outside the current soft scope; you can use it's value but assignment to it (the outsider) is not allowed, unless you are in a interactive context.
+

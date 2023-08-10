@@ -104,3 +104,27 @@ You can disambiguate by using `local x = 1` to suppress this warning.
 
 - You can "see" variable outside the current soft scope; you can use it's value but assignment to it (the outsider) is not allowed, unless you are in a interactive context.
 
+## Hard scope
+
+Rules for hard scope is simple. Please refer to julia's documentation [variables and scoping/local scope](https://docs.julialang.org/en/v1/manual/variables-and-scoping/#local-scope).
+Here I'm showing some surprising examples:
+
+```@repl b49w5d
+module Hello
+    function brutalredef(y)
+        Hello.x = y
+        return nothing
+    end
+    Hello.x = 4.99
+end
+
+using .Hello
+
+Hello.x
+
+Hello.brutalredef(12)
+
+Hello.x
+```
+
+You can redefine variables/functions this way.

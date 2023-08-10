@@ -1,17 +1,15 @@
 
 
-## Macro: create *expression* to be executed in its surrounded scope
-
-The use of `macro` is confusing. Thus, I made an exemplary `@sayhello3` to help me understand.
+## Introduction
 
 [`macro` returns *expression*](https://docs.julialang.org/en/v1/manual/metaprogramming/#man-macros), and the `ex::Expr` is executed in the scope just like `@eval(mod::Module, ex)` (`mod` can be `Main`).
 
-`ex::Expr` uses the surrounded scope (lexical scope):
-
 ```@example a789
 macro f45()
-    x = 5
-    return :(f(45))
+    return quote
+        x = 5 
+        f(45)
+    end
 end
 ```
 
@@ -25,51 +23,28 @@ f = tan
 @f45
 ```
 
-Variable defined in expression won't contaminate the surrounded scope,
+Although the returned expression can "see" the scope where the macro is defined, variable defined in expression won't contaminate the surrounded scope,
 ```@repl a789
 @f45
 
 x
 ```
 
-unless
 
-```@example b789
-module Hello
-    macro f45brutal()
-        Hello.x = 5
-        return :(f(45))
-    end
-    Hello.x = 4.99
-end
-```
-
-```@repl b789
-
-Hello.x
-
-Hello.@f45brutal
-
-Hello.x
-```
-
-Error occurred in `Hello.@f45brutal` because `Hello.f` is not defined. Noted that this is true for `Main` scope; yuo can redefine variables/functions under the `Main` scope this way.
-
-
-## Reference
-
-[Emma Boudreau - Metaprogramming in Julia: A Full Overview](https://towardsdatascience.com/metaprogramming-in-julia-a-full-overview-2b4e811f1f77)
-
-## Tips
-
-!!! tip "Tips"
-    - Multiline `quote ... end` is in fact `Expr(:block, ex1, ex2, ...)`
-    - `esc` escape `ex::Expr` from macro expansion; it is used to "violate" macro hygiene when necessary. See [Metaprogramming/#Hygiene](https://docs.julialang.org/en/v1/manual/metaprogramming/#Hygiene).
-    - `macroexpand` and `@macroexpand` is very useful in debugging. See [metaprogramming/#Hold-up:-why-macros?](https://docs.julialang.org/en/v1/manual/metaprogramming/#Hold-up:-why-macros?)
 
 ## Use `macro` or `@eval`uate an *expression*
 
-### It is generally safe to use macro defined in a clean `module`.
+### *expression* is executed in the scope where the macro is defined
+
+Execution of `macro` are isolated in the `module` where it is defined, just like a `function`.
+
+As a consequence, [macro hygiene](https://docs.julialang.org/en/v1/manual/metaprogramming/#Hygiene) is easy to maintain, that 
+it is generally safe to use macro defined in a clean `module`.
+
+The *expression* returned by macro can "see" the surrounding scope (e.g., `Main`)
+
+In this example, 
+You can redefine variables in `HelloWorld`, and 
 
 ```@example cx7d
 module HelloWorld
@@ -77,30 +52,33 @@ module HelloWorld
 
     macro definex(x)
         return quote
-            HelloWorld.x = $x
-            HelloWorld.sinx = f($x)
+            HelloWorld.x = $x # This is the `x` in `definex(x)`
+            HelloWorld.f = f
         end
     end
 
+    macro f(x)
+        return :(f($x))
+    end
+
     HelloWorld.x = 5.99
-    HelloWorld.sinx = f(x)
 end
 ```
 
 ```@example cx7d
-HelloWorld.x
-```
+using .HelloWorld
 
-```@example cx7d
-HelloWorld.sinx
-```
-
-```@example cx7d
-x = 5
+x = π/2
 f = cos
-f(x)
 ```
 
+`@f` takes `HelloWorld.f` (which is `sin`), not `f` of `Main` (`f = cos`):
+
+```@example cx7d
+HelloWorld.@f π/2
+```
+
+`@definex 0` redefine `HelloWorld.x = 0` and `HelloWorld.f` as the global `f` of `HelloWorld`:
 
 ```@example cx7d
 HelloWorld.@definex 0
@@ -108,16 +86,89 @@ HelloWorld.x
 ```
 
 ```@example cx7d
-HelloWorld.sinx
+HelloWorld.f
 ```
+
+They are not interacted with the `x` and `f` of the scope that calls the macro at all.
 
 ```@example cx7d
-x
+(x, f)
 ```
 
-!!! tip
-    Expression returned by `macro` is executed under the scope that the `macro` is defined.
-    - Noted that in `@definex` use `f` defined in `module HelloWorld ... end`
+No matter whether `@definex` is `export`ed or not:
+
+```@repl 
+module HelloWorld
+    f = sin
+
+    macro definex(x)
+        return quote
+            HelloWorld.x = $x # This is the `x` in `definex(x)`
+            HelloWorld.f = f
+            f2($x)
+        end
+    end
+
+    macro f(x)
+        return :(f($x))
+    end
+
+    HelloWorld.x = 5.99
+    export @definex
+end
+
+using .HelloWorld
+
+x = π/2; f = cos; f2 = tan;
+
+HelloWorld.@f π/2
+
+@definex 0
+
+HelloWorld.x
+
+HelloWorld.f
+
+(x, f)
+```
+
+!!! tip "Summary"
+    - Expression returned by `macro` is executed in the scope where the `macro` is defined, **NOT** where the the `macro` is called.
+    - This is evident as `@definex` use `f` defined in `module HelloWorld ... end`, and `f2` is unseen.
+
+
+Use `esc` to escape the expression from the scope of `HelloWorld`, that `f2` can thus be seen:
+
+```@repl 
+module HelloWorld
+    macro f(x)
+        return :(f($x))
+    end
+    export @f
+end
+
+using .HelloWorld
+
+f = sin
+
+@f 5
+```
+
+```@repl 
+module HelloWorld
+    macro f(x)
+        expr = :(f($x))
+        return :($(esc(expr)))
+    end
+    export @f
+end
+
+using .HelloWorld
+
+f = sin
+
+@f 5
+```
 
 ### The same result/utility can be achieved with `function` using `@eval`:
 
@@ -179,6 +230,18 @@ Noted that `ERROR: UndefVarError: 'ex' not defined` won't be raised when `ex` is
 sinx
 ```
 
+
+
+## Reference
+
+[Emma Boudreau - Metaprogramming in Julia: A Full Overview](https://towardsdatascience.com/metaprogramming-in-julia-a-full-overview-2b4e811f1f77)
+
+## Tips
+
+!!! tip "Tips"
+    - Multiline `quote ... end` is in fact `Expr(:block, ex1, ex2, ...)`
+    - `esc` escape `ex::Expr` from macro expansion; it is used to "violate" macro hygiene when necessary. See [Metaprogramming/#Hygiene](https://docs.julialang.org/en/v1/manual/metaprogramming/#Hygiene).
+    - `macroexpand` and `@macroexpand` is very useful in debugging. See [metaprogramming/#Hold-up:-why-macros?](https://docs.julialang.org/en/v1/manual/metaprogramming/#Hold-up:-why-macros?)
 
 ## Example 
 

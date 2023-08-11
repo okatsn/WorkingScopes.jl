@@ -34,4 +34,67 @@ include_string(@__MODULE__, code)</code></pre><pre class="documenter-example-out
                return nothing
            end
            Hello.x = 4.99
-       end</code><code class="nohighlight hljs ansi" style="display:block;">Main.Hello</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; using .Hello</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; Hello.x</code><code class="nohighlight hljs ansi" style="display:block;">4.99</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; Hello.brutalredef(12)</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; Hello.x</code><code class="nohighlight hljs ansi" style="display:block;">12</code></pre><p>You can redefine variables/functions this way.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../sayhello/">« Macro call explained</a><a class="docs-footer-nextpage" href="../importusing/">Import and Using »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Thursday 10 August 2023 09:21">Thursday 10 August 2023</span>. Using Julia version 1.9.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+       end</code><code class="nohighlight hljs ansi" style="display:block;">Main.Hello</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; using .Hello</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; Hello.x</code><code class="nohighlight hljs ansi" style="display:block;">4.99</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; Hello.brutalredef(12)</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; Hello.x</code><code class="nohighlight hljs ansi" style="display:block;">12</code></pre><p>You can redefine variables/functions this way.</p><h3 id="Hard-in-hard"><a class="docs-heading-anchor" href="#Hard-in-hard">Hard in hard</a><a id="Hard-in-hard-1"></a><a class="docs-heading-anchor-permalink" href="#Hard-in-hard" title="Permalink"></a></h3><ul><li><em>&quot;the local scope of a for loop body is no different from the local scope of an inner function&quot;</em></li><li><em>&quot;you can generally move code in or out of an inner function without changing its meaning&quot;</em></li><li><code>x = &lt;value&gt;</code> in hard scope: <em>&quot;If <code>x</code> is not already a local variable and assignment occurs inside of any hard scope construct (i.e. within a let block, function or macro body, comprehension, or generator), a new local named x is created in the scope of the assignment&quot;</em></li></ul><pre><code class="language-julia hljs">function sum_to_def_closure(n)
+    function loop_body(i)
+        t = s + i # new local `t`
+        s = t # assign same local `s` as below
+    end
+    s = 0 # new local
+    for i = 1:n
+        loop_body(i)
+    end
+    return s, @isdefined(t)
+end
+
+sum_to_def_closure(10)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(55, false)</code></pre><pre><code class="language-julia hljs">let n=10
+    function loop_body(i)
+        t = s + i # new local `t`
+        s = t # assign same local `s` as below
+    end
+    s = 0 # new local
+    for i = 1:n
+        loop_body(i)
+    end
+    (s, @isdefined(t))
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(55, false)</code></pre><pre><code class="language-julia hljs">function sum_to_def_closure(n)
+    s = 0
+    let
+      for i = 1:n
+          t = s + i # new local `t`
+          s = t # assign same local `s` as below
+      end
+    end
+    return s, @isdefined(t)
+end
+
+sum_to_def_closure(10)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(55, false)</code></pre><h3 id="Hard-in-soft"><a class="docs-heading-anchor" href="#Hard-in-soft">Hard in soft</a><a id="Hard-in-soft-1"></a><a class="docs-heading-anchor-permalink" href="#Hard-in-soft" title="Permalink"></a></h3><p>You should be ware of the warning!</p><pre><code class="language-julia hljs">code = &quot;&quot;&quot;
+s = try
+    n = 10
+    s = 0 # new local
+    function loop_body(i)
+        t = s + i # new local `t`
+        s = t # assign same local `s` as below
+    end
+    for i = 1:n
+        loop_body(i)
+    end
+    s
+catch e
+    throw(e)
+end
+
+show(s)
+&quot;&quot;&quot;
+
+include_string(@__MODULE__, code)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">┌ Warning: Assignment to `s` in soft scope is ambiguous because a global variable by the same name exists: `s` will be treated as a new local. Disambiguate by using `local s` to suppress this warning or `global s` to assign to the existing global variable.
+└ @ string:3
+55</code></pre><div class="admonition is-info"><header class="admonition-header">Explain</header><div class="admonition-body"></div></div><h3 id="Hard-in-Module"><a class="docs-heading-anchor" href="#Hard-in-Module">Hard in Module</a><a id="Hard-in-Module-1"></a><a class="docs-heading-anchor-permalink" href="#Hard-in-Module" title="Permalink"></a></h3><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; module SumDef
+           s = 0
+           function loop_body(i)
+               t = s + i # new local `t`
+               s = t # assign same local `s` as below
+           end
+           for i = 1:10
+               loop_body(i)
+           end
+       end</code><code class="nohighlight hljs ansi" style="display:block;">ERROR: UndefVarError: `s` not defined</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; using .SumDef</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; SumDef.s</code><code class="nohighlight hljs ansi" style="display:block;">0</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../sayhello/">« Macro call explained</a><a class="docs-footer-nextpage" href="../importusing/">Import and Using »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Friday 11 August 2023 07:12">Friday 11 August 2023</span>. Using Julia version 1.9.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

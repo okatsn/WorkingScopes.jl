@@ -128,3 +128,114 @@ Hello.x
 ```
 
 You can redefine variables/functions this way.
+
+### Hard in hard
+
+- *"the local scope of a for loop body is no different from the local scope of an inner function"*
+- *"you can generally move code in or out of an inner function without changing its meaning"*
+- `x = <value>` in hard scope: *"If `x` is not already a local variable and assignment occurs inside of any hard scope construct (i.e. within a let block, function or macro body, comprehension, or generator), a new local named x is created in the scope of the assignment"*
+
+
+
+```@example
+function sum_to_def_closure(n)
+    function loop_body(i)
+        t = s + i # new local `t`
+        s = t # assign same local `s` as below
+    end
+    s = 0 # new local
+    for i = 1:n
+        loop_body(i)
+    end
+    return s, @isdefined(t)
+end
+
+sum_to_def_closure(10)
+```
+
+
+
+```@example
+let n=10
+    function loop_body(i)
+        t = s + i # new local `t`
+        s = t # assign same local `s` as below
+    end
+    s = 0 # new local
+    for i = 1:n
+        loop_body(i)
+    end
+    (s, @isdefined(t))
+end
+```
+
+
+
+```@example
+function sum_to_def_closure(n)
+    s = 0
+    let
+      for i = 1:n
+          t = s + i # new local `t`
+          s = t # assign same local `s` as below
+      end
+    end
+    return s, @isdefined(t)
+end
+
+sum_to_def_closure(10)
+```
+
+### Hard in soft
+
+You should be ware of the warning!
+
+```@example
+code = """
+s = try 
+    n = 10
+    s = 0 # new local
+    function loop_body(i)
+        t = s + i # new local `t`
+        s = t # assign same local `s` as below
+    end
+    for i = 1:n
+        loop_body(i)
+    end
+    s
+catch e
+    throw(e)
+end
+
+show(s)
+"""
+
+include_string(@__MODULE__, code)
+```
+
+
+!!! note "Explain"
+    
+
+
+
+### Hard in Module
+
+
+```@repl
+module SumDef
+    s = 0
+    function loop_body(i)
+        t = s + i # new local `t`
+        s = t # assign same local `s` as below
+    end
+    for i = 1:10
+        loop_body(i)
+    end
+end
+
+using .SumDef
+
+SumDef.s
+```
+

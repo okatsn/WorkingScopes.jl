@@ -20,7 +20,8 @@ makedocs(;
             ["Macro call explained" => "sayhello.md"],
         "Variable Scope" =>
             ["Scope constructs" => "scopeconstruct.md",
-                "Import and Using" => "importusing.md"
+                "Import and Using" => "importusing.md",
+                "Extend methods" => "extendmethod.md"
             ]
     ]
 )
